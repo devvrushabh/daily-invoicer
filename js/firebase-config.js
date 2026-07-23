@@ -365,6 +365,9 @@ const FirebaseAuthManager = {
      ========================================================================== */
 
   /**
+   * Save user invoice to Firestore or user-scoped LocalStorage
+   */
+  /**
    * Save user invoice to user-scoped LocalStorage & Cloud Firestore
    */
   saveUserInvoice: async function(uid, invoice) {
