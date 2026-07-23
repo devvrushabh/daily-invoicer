@@ -4,7 +4,7 @@
 [![Firebase Hosting](https://img.shields.io/badge/Deploy-Firebase%20Hosting-FFCA28?style=for-the-badge&logo=firebase)](https://daily-invoicer.web.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**Daily Invoicer** is a modern, high-performance web application designed for freelancers, agencies, and businesses to create, manage, export, and email professional invoices in seconds. Featuring real-time document rendering, user-scoped Firebase authentication, cloud Firestore synchronization, interactive payment gateways, and client email dispatching.
+**Daily Invoicer** is a modern, high-performance web application designed for freelancers, agencies, and small businesses to create, customize, manage, export, and email professional invoices in seconds. Featuring real-time document rendering, user-scoped Firebase authentication, cloud Firestore synchronization, interactive payment checkout gateways, and client email dispatching.
 
 🌐 **Live Application**: [https://daily-invoicer.web.app/](https://daily-invoicer.web.app/)
 
@@ -15,30 +15,48 @@
 Experience all cloud features, Firestore invoice saving, and profile synchronization using the pre-configured demo account:
 
 > [!IMPORTANT]
-> **Demo Login Credentials**  
-> 📧 **Email**: `vrushabhdhote29@gmail.com`  
-> 🔑 **Password**: `Vd@12345`
+> **Demo Account Login Credentials**  
+> 📧 **Email**: `demo@email.com`  
+> 🔑 **Password**: `Demo@123`
 
 You can sign in using these credentials directly on the application overlay to access saved invoices across devices.
 
 ---
 
-## 📸 Screenshots & Visual Overview
+## 📸 Step-by-Step Application Walkthrough & Screenshots
 
-### 1. Main Application Dashboard & Live Split Editor
-The intuitive split-view layout provides a real-time reactive invoice editor alongside a live document canvas that updates synchronously as you type.
+### Step 1: Secure Account Authentication & Sign In
+The application features a clean, modal-based authentication overlay. Users can sign in using their account credentials, create a new account, reset forgotten passwords, or use one-click **Google Sign-In**. It also includes a seamless local fallback authentication mode for offline reliability.
 
-![Daily Invoicer Dashboard](docs/screenshots/app-dashboard.png)
+![Step 1 - Authentication Sign In](docs/screenshots/01-authentication-signin.png)
 
-### 2. Saved Invoices Library & Real-Time Sync
-Manage all your past invoices with instant search, status filtering (Paid, Pending, Overdue, Draft), one-click duplication, and cloud deletion.
+---
 
-![Saved Invoices Library](docs/screenshots/saved-invoices-modal.png)
+### Step 2: Main Workspace & Split View Editor (Light Mode)
+The default **Split View** workspace combines a comprehensive form editor on the left with a live, real-time document canvas on the right. As you type business details, client info, line items, or tax rates, the invoice document updates instantly.
 
-### 3. Professional A4 Printable Document & PDF Export
-Generate clean, professional invoices complete with customizable color themes, logo upload, payment terms, tax calculations, and status stamps.
+![Step 2 - Light Mode Split View Workspace](docs/screenshots/02-dashboard-light-mode.png)
 
-![Invoice Document Preview](docs/screenshots/invoice-preview.png)
+---
+
+### Step 3: Dark Mode Experience & High-Contrast Theme
+Daily Invoicer includes a built-in Dark Mode theme toggle for low-light environments. Powered by HSL CSS design tokens, it offers a smooth 400ms transition while maintaining high readability and visual contrast.
+
+![Step 3 - Dark Mode Split View Workspace](docs/screenshots/03-dashboard-dark-mode.png)
+
+---
+
+### Step 4: Focused Invoice Details & Metadata Editor
+Switching to **Edit Details** mode collapses the preview pane, providing a distraction-free environment for entering invoice numbers, issue and due dates, business profiles, client details, payment terms, and multiple line items.
+
+![Step 4 - Invoice Details Form Editor](docs/screenshots/04-editor-details-view.png)
+
+---
+
+### Step 5: Clean Live Document Preview & A4 Printable Sheet
+Switching to **Live Preview** mode gives a full-width view of the final printable A4 invoice sheet. Displays status stamps (UNPAID, PAID, OVERDUE), logo branding, dynamic currency symbols, summary calculations, and one-click **Download PDF** or **Print** buttons.
+
+![Step 5 - Live Document Preview Sheet](docs/screenshots/05-live-preview-document.png)
 
 ---
 
