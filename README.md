@@ -1,12 +1,14 @@
 # 📄 Daily Invoicer - Professional Billing & Invoice Solution
 
 [![Live Hosted App](https://img.shields.io/badge/Live%20App-https%3A%2F%2Fdaily--invoicer.web.app%2F-2563eb?style=for-the-badge&logo=firebase)](https://daily-invoicer.web.app/)
+[![Download Windows Setup](https://img.shields.io/badge/Download-Windows%20Setup%20(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/devvrushabh/daily-invoicer/releases/download/v1.0.0/Daily_Invoicer_Setup.exe)
 [![Firebase Hosting](https://img.shields.io/badge/Deploy-Firebase%20Hosting-FFCA28?style=for-the-badge&logo=firebase)](https://daily-invoicer.web.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
 **Daily Invoicer** is a modern, high-performance web application designed for freelancers, agencies, and small businesses to create, customize, manage, export, and email professional invoices in seconds. Featuring real-time document rendering, user-scoped Firebase authentication, cloud Firestore synchronization, interactive payment checkout gateways, and client email dispatching.
 
 🌐 **Live Application**: [https://daily-invoicer.web.app/](https://daily-invoicer.web.app/)
+📦 **Windows Installer (.exe)**: [Download Release v1.0.0](https://github.com/devvrushabh/daily-invoicer/releases/download/v1.0.0/Daily_Invoicer_Setup.exe)
 
 ---
 
