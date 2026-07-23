@@ -1,44 +1,16 @@
 /**
- * ApexInvoice - Default Sample Invoice Data & Currency Utilities
+ * ApexInvoice - Pre-filled Sample Data & Helper Models
  */
-
-const CURRENCY_MAP = {
-  INR: { symbol: '₹', name: 'Indian Rupee', code: 'INR' },
-  USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
-  EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
-  GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
-  CAD: { symbol: 'CA$', name: 'Canadian Dollar', code: 'CAD' },
-  AUD: { symbol: 'A$', name: 'Australian Dollar', code: 'AUD' },
-  JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' },
-  AED: { symbol: 'AED ', name: 'UAE Dirham', code: 'AED' }
-};
-
-function formatCurrency(amount, currencyCode = 'INR') {
-  const code = (currencyCode || 'INR').toUpperCase();
-  const meta = CURRENCY_MAP[code] || CURRENCY_MAP.INR;
-  const num = parseFloat(amount) || 0;
-
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: meta.code,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(num);
-  } catch (e) {
-    return `${meta.symbol}${num.toFixed(2)}`;
-  }
-}
 
 const DEFAULT_BUSINESS_PROFILE = {
   name: "Apex Studio Creative Agency",
   email: "billing@apexstudio.design",
   phone: "+1 (555) 234-8900",
-  address: "77 Innovation Tower, Suite 1400\nNew York, NY 10001\nTax ID: US-998877665",
-  logoBase64: "",
-  paymentTerms: "Wire Transfer: Apex Studio Ltd\nBank: Chase Bank N.A.\nAccount: 1234 5678 9012\nSWIFT: CHASEUS33XXX",
+  address: "77 Innovation Tower, Suite 1400\nNew York, NY 10001\nTax ID / VAT: US-998877665",
+  paymentTerms: "Wire Transfer / ACH Details:\nBank: HDFC Bank Ltd\nAccount: 5020-0012-345678\nIFSC Code: HDFC0001234\nBranch: Tech Park, Mumbai",
   upiId: "apexstudio@okaxis",
-  customQrBase64: ""
+  customQrBase64: "",
+  logoBase64: ""
 };
 
 const DEFAULT_CLIENTS = [
@@ -51,8 +23,15 @@ const DEFAULT_CLIENTS = [
   },
   {
     id: "client-2",
-    name: "Global Dynamics Corp.",
-    email: "billing@globaldynamics.io",
+    name: "Nexus Global Logistics",
+    email: "invoices@nexusglobal.io",
+    phone: "+1 (555) 345-6789",
+    address: "120 Logistics Parkway\nChicago, IL 60607"
+  },
+  {
+    id: "client-3",
+    name: "Vanguard Tech Solutions",
+    email: "finance@vanguardtech.dev",
     phone: "+44 20 7946 0912",
     address: "25 Finsbury Circus\nLondon, EC2M 7EE, UK"
   }
@@ -80,42 +59,66 @@ const INITIAL_SAMPLE_INVOICE = {
   clientPhone: "+1 (555) 887-1234",
   clientAddress: "500 Market Street, Floor 12\nSan Francisco, CA 94105",
 
-  // Services & Products Line Items
+  // Line Items
   items: [
     {
       id: "item-1",
-      description: "UI/UX Mobile App Redesign & Design System Specification",
-      qty: 40,
-      price: 1200.00
+      description: "Brand Identity System & Custom Web UI/UX Design",
+      qty: 1,
+      price: 25000.00
     },
     {
       id: "item-2",
-      description: "Cloud Infrastructure Setup & CI/CD Pipeline Automation",
-      qty: 1,
-      price: 3500.00
+      description: "Frontend Web Application Development (HTML5 / Vanilla JS / CSS3)",
+      qty: 40,
+      price: 1500.00
     },
     {
       id: "item-3",
-      description: "Annual SLA Server Maintenance & Support License",
+      description: "Cloud Architecture Setup & Automated CI/CD Pipeline",
       qty: 1,
-      price: 2500.00
+      price: 10000.00
     }
   ],
 
-  // Summary Calculations
-  taxRate: 8.5,
+  // Calculations
+  taxRate: 18.0,
   discountValue: 1500.00,
-  discountType: "fixed",
+  discountType: "fixed", // 'percent' or 'fixed'
   shipping: 0.00,
   amountPaid: 0.00,
 
-  // Terms & Notes
-  paymentTerms: "Direct Wire Transfer / UPI Accepted\nBank: Chase Bank N.A.\nAccount #: 1234 5678 9012\nSWIFT: CHASEUS33XXX",
-  notes: "Thank you for partnering with Apex Studio! Please complete payment by the due date."
+  // Notes & Payment
+  paymentTerms: "Bank Transfer:\nBank: HDFC Bank Ltd\nAccount: 5020-0012-345678\nIFSC Code: HDFC0001234\nBranch: Tech Park, Mumbai",
+  notes: "Thank you for partnering with Apex Studio! Please issue payment within 15 days of invoice date."
 };
 
-window.CURRENCY_MAP = CURRENCY_MAP;
-window.formatCurrency = formatCurrency;
+const CURRENCY_MAP = {
+  INR: { symbol: "₹", code: "INR" },
+  USD: { symbol: "$", code: "USD" },
+  EUR: { symbol: "€", code: "EUR" },
+  GBP: { symbol: "£", code: "GBP" },
+  CAD: { symbol: "CA$", code: "CAD" },
+  AUD: { symbol: "A$", code: "AUD" },
+  JPY: { symbol: "¥", code: "JPY" },
+  AED: { symbol: "AED ", code: "AED" }
+};
+
+/**
+ * Format currency helper
+ */
+function formatCurrency(amount, currencyCode = "INR") {
+  const curr = CURRENCY_MAP[currencyCode] || CURRENCY_MAP.INR;
+  const numericAmount = parseFloat(amount) || 0;
+  return curr.symbol + numericAmount.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+// Bind symbols to window for ES Module & global scope compatibility
 window.DEFAULT_BUSINESS_PROFILE = DEFAULT_BUSINESS_PROFILE;
 window.DEFAULT_CLIENTS = DEFAULT_CLIENTS;
 window.INITIAL_SAMPLE_INVOICE = INITIAL_SAMPLE_INVOICE;
+window.CURRENCY_MAP = CURRENCY_MAP;
+window.formatCurrency = formatCurrency;
