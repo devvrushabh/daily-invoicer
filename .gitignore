@@ -1,4 +1,6 @@
 node_modules
+windows-app/node_modules
+windows-app/dist-installer
 dist
 .env
 .env.local

@@ -1,0 +1,55 @@
+{
+  "name": "daily-invoicer-desktop",
+  "version": "1.0.0",
+  "description": "Daily Invoicer - Windows Desktop Application",
+  "main": "main.js",
+  "author": "Vrushabh Dhote",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "pack": "electron-builder --win portable"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.dailyinvoicer.app",
+    "productName": "Daily Invoicer",
+    "copyright": "Copyright © 2026 Vrushabh Dhote",
+    "directories": {
+      "output": "dist-installer"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Daily_Invoicer_Setup_${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Daily Invoicer"
+    }
+  }
+}
