@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Invoicer - Pro Billing Solutions</title>
+  <meta name="description"
+    content="Create, customize, manage, and download professional invoices in seconds with Daily Invoicer.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- html2pdf.js for Client-Side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Firebase v10 Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Early Zero-FOUC Theme Initializer -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('apex_theme_mode');
+        var theme = saved || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.add(theme + '-theme');
+      } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="app" class="app-wrapper">
+
+    <!-- Top Navigation Header -->
+    <header class="app-header no-print">
+      <div class="header-container">
+        <div class="brand-logo-group">
+          <div class="brand-icon-box">
+            <i data-lucide="file-text" class="brand-icon"></i>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">Daily<span>Invoicer</span></h1>
+            <span class="brand-badge">Pro Billing</span>
+          </div>
+        </div>
+
+        <!-- Center Quick Stats Navigation -->
+        <div class="quick-stats-bar">
+          <div class="stat-chip">
+            <span class="chip-label">Saved Invoices</span>
+            <span class="chip-value" id="stat-total-count">0</span>
+          </div>
+          <div class="stat-chip">
+            <span class="chip-label">Total Outstanding</span>
+            <span class="chip-value" id="stat-total-pending">₹0.00</span>
+          </div>
+          <div class="stat-chip">
+            <span class="chip-label">Paid Volume</span>
+            <span class="chip-value text-success" id="stat-total-paid">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Top Right User Account & Actions -->
+        <div class="header-actions">
+          <button class="btn btn-secondary theme-toggle-btn" id="btn-toggle-theme" title="Toggle Dark / Light Theme">
+            <i data-lucide="moon" id="theme-toggle-icon"></i>
+            <span id="theme-toggle-text">Dark Mode</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-pay-now" title="Pay Current Invoice Online">
+            <i data-lucide="credit-card"></i>
+            <span>Pay Now</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-open-saved" title="Manage Saved Invoices">
+            <i data-lucide="folder-open"></i>
+            <span>Saved Invoices</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-open-settings" title="Business Settings Profile">
+            <i data-lucide="building-2"></i>
+            <span>Business Profile</span>
+          </button>
+          <button class="btn btn-primary" id="btn-new-invoice" title="Create New Blank Invoice">
+            <i data-lucide="plus"></i>
+            <span>New Invoice</span>
+          </button>
+
+          <!-- User Account Badge & Sign Out -->
+          <div class="user-account-menu" id="user-account-menu" style="display: none;">
+            <div class="user-avatar-badge" id="header-user-avatar">
+              <i data-lucide="user"></i>
+            </div>
+            <div class="user-info-text">
+              <span class="user-email-display" id="header-user-email">user@example.com</span>
+              <button class="btn-link text-inverse btn-xs" id="btn-sign-out" title="Sign Out">
+                <i data-lucide="log-out"></i> Sign Out
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-accent btn-sm" id="btn-header-sign-in" style="display: none;">
+            <i data-lucide="log-in"></i> Sign In
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- App Sub-Header Toolbar -->
+    <div class="toolbar-strip no-print">
+      <div class="toolbar-container">
+        <div class="mode-tabs">
+          <button class="tab-btn active" id="tab-editor-mode" data-target="split">
+            <i data-lucide="layout-grid"></i> Split View
+          </button>
+          <button class="tab-btn" id="tab-edit-only" data-target="editor">
+            <i data-lucide="edit-3"></i> Edit Details
+          </button>
+          <button class="tab-btn" id="tab-preview-only" data-target="preview">
+            <i data-lucide="eye"></i> Live Preview
+          </button>
+        </div>
+
+        <div class="template-selector">
+          <label for="select-template"><i data-lucide="palette"></i> Template Theme:</label>
+          <select id="select-template" class="select-input">
+            <option value="modern-blue" selected>Modern Royal Blue</option>
+            <option value="executive-navy">Executive Slate</option>
+            <option value="minimal-cyan">Clean Cyan Minimal</option>
+          </select>
+        </div>
+
+        <div class="toolbar-main-actions">
+          <button class="btn btn-primary btn-icon-text" id="btn-send-email" onclick="openSendEmailModal()"
+            title="Send Invoice to Client Email">
+            <i data-lucide="send"></i> Send to Client
+          </button>
+          <button class="btn btn-secondary btn-icon-text" id="btn-open-firebase-config"
+            title="Firebase Credentials Config">
+            <i data-lucide="key"></i> Firebase Config
+          </button>
+          <button class="btn btn-secondary btn-icon-text" id="btn-save-draft">
+            <i data-lucide="save"></i> Save Invoice
+          </button>
+          <button class="btn btn-secondary btn-icon-text" id="btn-print-invoice">
+            <i data-lucide="printer"></i> Print
+          </button>
+          <button class="btn btn-accent btn-icon-text" id="btn-download-pdf">
+            <i data-lucide="download"></i> Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Container -->
+    <main class="main-workspace" id="workspace-container">
+
+      <!-- LEFT COLUMN: INVOICE EDITOR FORM -->
+      <section class="editor-pane no-print" id="editor-pane">
+        <div class="editor-header">
+          <h2><i data-lucide="file-edit"></i> Invoice Details</h2>
+          <span class="editor-subtitle">Fill in information to update the live preview</span>
+        </div>
+
+        <form id="invoice-form" onsubmit="return false;">
+
+          <!-- SECTION 1: INVOICE META & STATUS -->
+          <div class="form-card">
+            <div class="card-header">
+              <i data-lucide="info"></i>
+              <h3>Invoice Identifiers & Dates</h3>
+            </div>
+            <div class="form-grid grid-3">
+              <div class="form-group">
+                <label for="inv-number">Invoice Number</label>
+                <div class="input-with-icon">
+                  <i data-lucide="hash"></i>
+                  <input type="text" id="inv-number" value="INV-2026-001" placeholder="e.g. INV-001">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inv-date">Issue Date</label>
+                <input type="date" id="inv-date">
+              </div>
+              <div class="form-group">
+                <label for="inv-due-date">Due Date</label>
+                <input type="date" id="inv-due-date">
+              </div>
+            </div>
+
+            <div class="form-grid grid-3 mt-3">
+              <div class="form-group">
+                <label for="inv-status">Payment Status</label>
+                <select id="inv-status" class="select-input">
+                  <option value="Unpaid">Unpaid / Pending</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Overdue">Overdue</option>
+                  <option value="Draft">Draft</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="inv-currency">Currency</label>
+                <select id="inv-currency" class="select-input">
+                  <option value="INR" data-symbol="₹" selected>INR (₹) - Indian Rupee</option>
+                  <option value="USD" data-symbol="$">USD ($) - US Dollar</option>
+                  <option value="EUR" data-symbol="€">EUR (€) - Euro</option>
+                  <option value="GBP" data-symbol="£">GBP (£) - British Pound</option>
+                  <option value="CAD" data-symbol="CA$">CAD ($) - Canadian Dollar</option>
+                  <option value="AUD" data-symbol="A$">AUD ($) - Australian Dollar</option>
+                  <option value="JPY" data-symbol="¥">JPY (¥) - Japanese Yen</option>
+                  <option value="AED" data-symbol="AED ">AED - UAE Dirham</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="inv-po-number">P.O. / Ref Number (Optional)</label>
+                <input type="text" id="inv-po-number" placeholder="PO-99482">
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: BUSINESS & CLIENT DETAILS -->
+          <div class="form-grid grid-2 mt-4">
+
+            <!-- Sender / Business Info -->
+            <div class="form-card">
+              <div class="card-header justify-between">
+                <div class="flex-align">
+                  <i data-lucide="building"></i>
+                  <h3>Your Business Info</h3>
+                </div>
+                <button type="button" class="btn-link" id="btn-load-saved-profile" title="Autofill from saved profile">
+                  <i data-lucide="sparkles"></i> Load Default
+                </button>
+              </div>
+
+              <div class="form-group">
+                <label for="biz-name">Company / Business Name</label>
+                <input type="text" id="biz-name" placeholder="Acme Technologies Inc.">
+              </div>
+
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="biz-email">Email Address</label>
+                  <input type="email" id="biz-email" placeholder="billing@acme.com">
+                </div>
+                <div class="form-group">
+                  <label for="biz-phone">Phone Number</label>
+                  <input type="text" id="biz-phone" placeholder="+1 (555) 234-5678">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="biz-address">Address & Tax ID</label>
+                <textarea id="biz-address" rows="2"
+                  placeholder="100 Innovation Way, Suite 400&#10;New York, NY 10001&#10;VAT: US987654321"></textarea>
+              </div>
+            </div>
+
+            <!-- Client / Customer Info -->
+            <div class="form-card">
+              <div class="card-header justify-between">
+                <div class="flex-align">
+                  <i data-lucide="user-check"></i>
+                  <h3>Billed To (Client)</h3>
+                </div>
+                <select id="select-saved-client" class="select-input select-sm">
+                  <option value="">-- Choose Saved Client --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="client-name">Client Name / Business Name</label>
+                <input type="text" id="client-name" placeholder="Global Dynamics Corp.">
+              </div>
+
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="client-email">Client Email</label>
+                  <input type="email" id="client-email" placeholder="accounts@globaldyn.com">
+                </div>
+                <div class="form-group">
+                  <label for="client-phone">Client Phone</label>
+                  <input type="text" id="client-phone" placeholder="+1 (555) 987-6543">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="client-address">Billing Address</label>
+                <textarea id="client-address" rows="2"
+                  placeholder="500 Enterprise Blvd&#10;San Francisco, CA 94105"></textarea>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SECTION 3: LINE ITEMS TABLE -->
+          <div class="form-card mt-4">
+            <div class="card-header justify-between">
+              <div class="flex-align">
+                <i data-lucide="layers"></i>
+                <h3>Services & Products</h3>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-add-item">
+                <i data-lucide="plus-circle"></i> Add Item
+              </button>
+            </div>
+
+            <div class="items-table-wrapper">
+              <table class="items-editor-table" id="items-editor-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40%">Service / Product Description</th>
+                    <th style="width: 15%">Qty</th>
+                    <th style="width: 20%">Price (<span class="currency-symbol">$</span>)</th>
+                    <th style="width: 20%">Amount (<span class="currency-symbol">$</span>)</th>
+                    <th style="width: 5%"></th>
+                  </tr>
+                </thead>
+                <tbody id="items-tbody">
+                  <!-- Line items rendered dynamically via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SECTION 4: CALCULATIONS & NOTES -->
+          <div class="form-grid grid-2 mt-4">
+
+            <!-- Notes & Payment Info -->
+            <div class="form-card">
+              <div class="card-header">
+                <i data-lucide="message-square"></i>
+                <h3>Notes & Payment Info</h3>
+              </div>
+              <div class="form-group">
+                <label for="inv-payment-terms">Payment Methods / Bank Details</label>
+                <textarea id="inv-payment-terms" rows="2"
+                  placeholder="Bank: Chase Bank&#10;Account #: 1234 5678 9012&#10;Routing #: 987654321&#10;SWIFT/IBAN: CHASEUS33XXX"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="inv-notes">Notes / Customer Note</label>
+                <textarea id="inv-notes" rows="2"
+                  placeholder="Thank you for your business! Payment is due within 15 days of invoice date."></textarea>
+              </div>
+            </div>
+
+            <!-- Tax, Discount, Shipping & Totals Editor -->
+            <div class="form-card">
+              <div class="card-header">
+                <i data-lucide="calculator"></i>
+                <h3>Summary Calculations</h3>
+              </div>
+
+              <div class="calc-row">
+                <label for="inv-tax-rate">Tax Rate (%)</label>
+                <div class="input-with-suffix">
+                  <input type="number" id="inv-tax-rate" min="0" max="100" step="0.1" value="8.5">
+                  <span class="suffix">%</span>
+                </div>
+              </div>
+
+              <div class="calc-row">
+                <label for="inv-discount-val">Discount</label>
+                <div class="discount-input-group">
+                  <input type="number" id="inv-discount-val" min="0" step="0.01" value="0">
+                  <select id="inv-discount-type" class="select-input select-xs">
+                    <option value="percent">%</option>
+                    <option value="fixed" class="currency-symbol">$</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="calc-row">
+                <label for="inv-shipping">Shipping / Handling Fee</label>
+                <div class="input-with-prefix">
+                  <span class="prefix currency-symbol">$</span>
+                  <input type="number" id="inv-shipping" min="0" step="0.01" value="0">
+                </div>
+              </div>
+
+              <div class="calc-row">
+                <label for="inv-amount-paid">Amount Already Paid</label>
+                <div class="input-with-prefix">
+                  <span class="prefix currency-symbol">$</span>
+                  <input type="number" id="inv-amount-paid" min="0" step="0.01" value="0">
+                </div>
+              </div>
+
+              <hr class="calc-divider">
+
+              <div class="summary-live-box">
+                <div class="summary-line">
+                  <span>Subtotal:</span>
+                  <strong id="calc-subtotal">$0.00</strong>
+                </div>
+                <div class="summary-line">
+                  <span>Tax Amount:</span>
+                  <span id="calc-tax-amt">$0.00</span>
+                </div>
+                <div class="summary-line text-discount" id="calc-discount-row" style="display:none;">
+                  <span>Discount:</span>
+                  <span id="calc-discount-amt">-$0.00</span>
+                </div>
+                <div class="summary-line" id="calc-shipping-row" style="display:none;">
+                  <span>Shipping:</span>
+                  <span id="calc-shipping-amt">$0.00</span>
+                </div>
+                <div class="summary-line grand-total-line">
+                  <span>Grand Total:</span>
+                  <strong id="calc-grand-total">$0.00</strong>
+                </div>
+                <div class="summary-line due-line">
+                  <span>Balance Due:</span>
+                  <span class="badge-due" id="calc-balance-due">$0.00</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </form>
+      </section>
+
+
+      <!-- RIGHT COLUMN: LIVE INVOICE PREVIEW CANVAS -->
+      <section class="preview-pane" id="preview-pane">
+        <div class="preview-header no-print">
+          <div class="preview-title-group">
+            <span class="pulse-dot"></span>
+            <h3>Live Document Preview</h3>
+          </div>
+          <div class="preview-zoom-actions">
+            <span class="paper-size-tag">Standard A4</span>
+          </div>
+        </div>
+
+        <!-- THE PRINTABLE / GENERATED INVOICE SHEET -->
+        <div class="paper-wrapper">
+          <div class="invoice-paper modern-blue" id="invoice-paper">
+
+            <!-- Watermark / Status Stamp -->
+            <div class="status-stamp stamp-unpaid" id="preview-status-stamp">UNPAID</div>
+
+            <!-- INVOICE HEADER BLOCK -->
+            <div class="inv-paper-header">
+              <div class="biz-brand-col">
+                <div class="paper-logo-container" id="paper-logo-container">
+                  <img id="paper-logo-img" src="" alt="Logo" class="biz-paper-logo" style="display: none;">
+                  <div id="paper-logo-placeholder" class="biz-paper-logo-placeholder">
+                    <i data-lucide="building"></i>
+                  </div>
+                </div>
+                <div class="biz-details-box">
+                  <h2 class="paper-biz-name" id="paper-biz-name">Acme Technologies Inc.</h2>
+                  <p class="paper-biz-contact" id="paper-biz-email">billing@acme.com</p>
+                  <p class="paper-biz-contact" id="paper-biz-phone">+1 (555) 234-5678</p>
+                  <div class="paper-biz-address" id="paper-biz-address">
+                    100 Innovation Way, Suite 400<br>
+                    New York, NY 10001
+                  </div>
+                </div>
+              </div>
+
+              <div class="inv-meta-col">
+                <h1 class="inv-main-heading">INVOICE</h1>
+                <div class="inv-meta-badge" id="paper-inv-number">#INV-2026-001</div>
+
+                <table class="paper-meta-table">
+                  <tr>
+                    <th>Date Issued:</th>
+                    <td id="paper-inv-date">Jul 21, 2026</td>
+                  </tr>
+                  <tr>
+                    <th>Due Date:</th>
+                    <td id="paper-inv-due-date">Aug 05, 2026</td>
+                  </tr>
+                  <tr id="paper-po-row">
+                    <th>P.O. Ref:</th>
+                    <td id="paper-inv-po">PO-99482</td>
+                  </tr>
+                  <tr>
+                    <th>Status:</th>
+                    <td><span class="paper-status-pill" id="paper-status-pill">Pending</span></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="paper-divider"></div>
+
+            <!-- INVOICE CLIENT TO BLOCK -->
+            <div class="inv-paper-parties">
+              <div class="party-box bill-to-box">
+                <span class="party-label">Billed To:</span>
+                <h3 class="party-name" id="paper-client-name">Global Dynamics Corp.</h3>
+                <p class="party-sub" id="paper-client-email">accounts@globaldyn.com</p>
+                <p class="party-sub" id="paper-client-phone">+1 (555) 987-6543</p>
+                <div class="party-address" id="paper-client-address">
+                  500 Enterprise Blvd<br>
+                  San Francisco, CA 94105
+                </div>
+              </div>
+
+              <div class="party-box amount-due-box">
+                <span class="party-label">Amount Due:</span>
+                <div class="big-amount-display" id="paper-big-amount">₹0.00</div>
+                <div class="due-by-text" id="paper-due-by-text">Due by Aug 05, 2026</div>
+                <div class="txn-meta-banner" id="paper-txn-meta" style="display: none;"></div>
+              </div>
+            </div>
+
+            <!-- LINE ITEMS TABLE -->
+            <div class="paper-table-container">
+              <table class="paper-items-table">
+                <thead>
+                  <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-desc">Description / Service</th>
+                    <th class="col-qty">Qty</th>
+                    <th class="col-price">Unit Price</th>
+                    <th class="col-total">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="paper-items-tbody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TOTALS & NOTES BLOCK -->
+            <div class="paper-bottom-grid">
+              <div class="paper-notes-col">
+                <div class="paper-info-card" id="paper-payment-info-card">
+                  <h4><i data-lucide="credit-card"></i> Payment Details</h4>
+                  <div id="paper-payment-terms">Bank Transfer: Acme Technologies<br>Account #: 1234 5678 9012</div>
+                </div>
+
+                <div class="paper-info-card mt-2" id="paper-notes-card">
+                  <h4><i data-lucide="message-square"></i> Notes</h4>
+                  <div id="paper-notes-text">Thank you for working with us!</div>
+                </div>
+              </div>
+
+              <div class="paper-totals-col">
+                <table class="paper-totals-table">
+                  <tr>
+                    <th>Subtotal:</th>
+                    <td id="paper-subtotal">$0.00</td>
+                  </tr>
+                  <tr id="paper-tax-row">
+                    <th>Tax (<span id="paper-tax-rate">8.5</span>%):</th>
+                    <td id="paper-tax-amt">$0.00</td>
+                  </tr>
+                  <tr id="paper-discount-row" style="display: none;">
+                    <th>Discount:</th>
+                    <td id="paper-discount-amt">-$0.00</td>
+                  </tr>
+                  <tr id="paper-shipping-row" style="display: none;">
+                    <th>Shipping:</th>
+                    <td id="paper-shipping-amt">$0.00</td>
+                  </tr>
+                  <tr class="final-total-row">
+                    <th>Total:</th>
+                    <td id="paper-grand-total">$0.00</td>
+                  </tr>
+                  <tr id="paper-paid-row" style="display: none;">
+                    <th>Amount Paid:</th>
+                    <td id="paper-paid-amt">$0.00</td>
+                  </tr>
+                  <tr class="balance-due-row">
+                    <th>Balance Due:</th>
+                    <td id="paper-balance-due">$0.00</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- INVOICE FOOTER -->
+            <div class="paper-footer">
+              <p>Invoice generated by <strong>Daily Invoicer</strong> • Thank you for your business!</p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FULL SCREEN AUTHENTICATION OVERLAY / MODAL -->
+    <div class="auth-overlay no-print" id="auth-overlay">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="brand-icon-box">
+            <i data-lucide="file-text" class="brand-icon"></i>
+          </div>
+          <h2>Welcome to <span>Daily Invoicer</span></h2>
+          <p id="auth-sub-title">Sign in to manage and sync your professional invoices</p>
+        </div>
+
+        <!-- AUTH VIEW 1: SIGN IN -->
+        <div class="auth-view" id="auth-view-signin">
+          <form id="form-signin" onsubmit="return false;">
+            <div class="form-group">
+              <label for="signin-email">Email Address</label>
+              <div class="input-with-icon">
+                <i data-lucide="mail"></i>
+                <input type="email" id="signin-email" placeholder="name@company.com" required>
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <div class="justify-between">
+                <label for="signin-password">Password</label>
+                <button type="button" class="btn-link" id="btn-show-forgot">Forgot Password?</button>
+              </div>
+              <div class="input-with-icon">
+                <i data-lucide="lock"></i>
+                <input type="password" id="signin-password" placeholder="••••••••" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full mt-4" id="btn-submit-signin">
+              <i data-lucide="log-in"></i> Sign In
+            </button>
+          </form>
+
+          <div class="auth-divider"><span>OR</span></div>
+
+          <button class="btn btn-secondary btn-full btn-google" id="btn-signin-google">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+              <path fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            </svg>
+            Sign in with Google
+          </button>
+
+          <div class="auth-footer mt-4">
+            <span>Don't have an account?</span>
+            <button class="btn-link" id="btn-show-signup">Create Account</button>
+          </div>
+        </div>
+
+        <!-- AUTH VIEW 2: SIGN UP -->
+        <div class="auth-view" id="auth-view-signup" style="display: none;">
+          <form id="form-signup" onsubmit="return false;">
+            <div class="form-group">
+              <label for="signup-name">Full Name / Business Name</label>
+              <div class="input-with-icon">
+                <i data-lucide="user"></i>
+                <input type="text" id="signup-name" placeholder="John Doe" required>
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <label for="signup-email">Email Address</label>
+              <div class="input-with-icon">
+                <i data-lucide="mail"></i>
+                <input type="email" id="signup-email" placeholder="name@company.com" required>
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <label for="signup-password">Password</label>
+              <div class="input-with-icon">
+                <i data-lucide="lock"></i>
+                <input type="password" id="signup-password" placeholder="••••••••" required minlength="6">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full mt-4" id="btn-submit-signup">
+              <i data-lucide="user-plus"></i> Create Account
+            </button>
+          </form>
+
+          <div class="auth-footer mt-4">
+            <span>Already have an account?</span>
+            <button class="btn-link" id="btn-show-signin">Sign In</button>
+          </div>
+        </div>
+
+        <!-- AUTH VIEW 3: FORGOT PASSWORD -->
+        <div class="auth-view" id="auth-view-forgot" style="display: none;">
+          <p class="text-muted text-sm mb-3">Enter your account email address to receive a password reset link.</p>
+          <form id="form-forgot" onsubmit="return false;">
+            <div class="form-group">
+              <label for="forgot-email">Email Address</label>
+              <div class="input-with-icon">
+                <i data-lucide="mail"></i>
+                <input type="email" id="forgot-email" placeholder="name@company.com" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full mt-4" id="btn-submit-forgot">
+              <i data-lucide="send"></i> Send Reset Link
+            </button>
+          </form>
+
+          <div class="auth-footer mt-4">
+            <button class="btn-link" id="btn-back-signin"><i data-lucide="arrow-left"></i> Back to Sign In</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- MODAL 1: SAVED INVOICES DASHBOARD -->
+    <div class="modal-backdrop no-print" id="modal-saved-invoices">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <div class="modal-title flex-align">
+            <i data-lucide="folder"></i>
+            <h2>Saved Invoices Library</h2>
+          </div>
+          <button class="btn-close" id="btn-close-saved">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-toolbar">
+            <div class="search-box">
+              <i data-lucide="search"></i>
+              <input type="text" id="search-saved-invoices" placeholder="Search by client, invoice #...">
+            </div>
+            <div class="filter-tabs">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="Unpaid">Pending</button>
+              <button class="filter-btn" data-filter="Paid">Paid</button>
+              <button class="filter-btn" data-filter="Draft">Draft</button>
+            </div>
+          </div>
+
+          <div class="saved-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Due Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="saved-invoices-tbody">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-between">
+          <button class="btn btn-secondary btn-sm" id="btn-export-backup">
+            <i data-lucide="download"></i> Export Data Backup (JSON)
+          </button>
+          <button class="btn btn-primary" id="btn-done-saved">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: BUSINESS PROFILE SETTINGS -->
+    <div class="modal-backdrop no-print" id="modal-business-settings">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title flex-align">
+            <i data-lucide="building-2"></i>
+            <h2>Business Settings Profile</h2>
+          </div>
+          <button class="btn-close" id="btn-close-settings">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-desc">Save your standard company details & logo here. They will automatically pre-fill all
+            newly generated invoices.</p>
+
+          <div class="logo-upload-zone mt-3">
+            <div class="logo-preview-box" id="settings-logo-preview">
+              <i data-lucide="image" id="settings-logo-placeholder-icon"></i>
+              <img id="settings-logo-img" src="" alt="Uploaded Logo" style="display: none;">
+            </div>
+            <div class="logo-actions">
+              <label for="input-logo-file" class="btn btn-secondary btn-sm cursor-pointer">
+                <i data-lucide="upload"></i> Upload Logo
+              </label>
+              <input type="file" id="input-logo-file" accept="image/*" style="display: none;">
+              <button type="button" class="btn btn-secondary btn-sm text-danger" id="btn-remove-logo">
+                <i data-lucide="trash-2"></i> Remove Logo
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label for="pref-biz-name">Default Business Name</label>
+            <input type="text" id="pref-biz-name" placeholder="Apex Studio Ltd">
+          </div>
+
+          <div class="form-grid grid-2">
+            <div class="form-group">
+              <label for="pref-biz-email">Default Email</label>
+              <input type="email" id="pref-biz-email" placeholder="contact@apexstudio.com">
+            </div>
+            <div class="form-group">
+              <label for="pref-biz-phone">Default Phone</label>
+              <input type="text" id="pref-biz-phone" placeholder="+1 (555) 019-2834">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="pref-biz-address">Default Address & Tax / VAT Details</label>
+            <textarea id="pref-biz-address" rows="3"
+              placeholder="77 Blue Skyline Blvd, Suite 1200&#10;San Jose, CA 95113&#10;Tax ID: 99-8877665"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="pref-biz-payment">Default Payment Instructions / Bank Info</label>
+            <textarea id="pref-biz-payment" rows="2"
+              placeholder="Wire Transfer: Apex Studio Ltd&#10;Bank: HDFC Bank Ltd&#10;Account: 5020-0012-345678&#10;IFSC Code: HDFC0001234"></textarea>
+          </div>
+
+          <!-- UPI ID & CUSTOM PAYMENT QR CODE UPLOAD -->
+          <div class="form-group mt-3">
+            <label for="pref-biz-upi">Business UPI ID / Payee VPA</label>
+            <input type="text" id="pref-biz-upi" placeholder="yourbusiness@okicici or 9876543210@paytm">
+          </div>
+
+          <div class="logo-upload-zone mt-3">
+            <div class="text-xs font-semibold mb-1 text-muted">Custom Payment QR Code Image (GPay / PhonePe / Paytm)</div>
+            <div class="flex-align gap-3">
+              <div class="logo-preview-box" id="settings-qr-preview" style="width: 72px; height: 72px;">
+                <i data-lucide="qr-code" id="settings-qr-placeholder-icon"></i>
+                <img id="settings-qr-img" src="" alt="Uploaded QR Code" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+              </div>
+              <div class="logo-actions">
+                <label for="input-qr-file" class="btn btn-secondary btn-sm cursor-pointer">
+                  <i data-lucide="upload"></i> Upload Custom QR Image
+                </label>
+                <input type="file" id="input-qr-file" accept="image/*" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm text-danger" id="btn-remove-qr">
+                  <i data-lucide="trash-2"></i> Remove QR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-cancel-settings">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-settings">
+            <i data-lucide="check"></i> Save Settings Profile
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: FIREBASE CONFIG KEYS MODAL -->
+    <div class="modal-backdrop no-print" id="modal-firebase-config">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title flex-align">
+            <i data-lucide="key"></i>
+            <h2>Firebase Credentials Configuration</h2>
+          </div>
+          <button class="btn-close" id="btn-close-firebase-config">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-desc">Paste your Firebase Project Credentials below to connect your own live Firebase Auth &
+            Firestore database.</p>
+
+          <div class="form-group mt-3">
+            <label for="fb-api-key">API Key</label>
+            <input type="text" id="fb-api-key" placeholder="AIzaSy...">
+          </div>
+          <div class="form-grid grid-2 mt-2">
+            <div class="form-group">
+              <label for="fb-auth-domain">Auth Domain</label>
+              <input type="text" id="fb-auth-domain" placeholder="my-app.firebaseapp.com">
+            </div>
+            <div class="form-group">
+              <label for="fb-project-id">Project ID</label>
+              <input type="text" id="fb-project-id" placeholder="my-app-id">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-cancel-fb-config">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-fb-config">
+            <i data-lucide="check"></i> Save & Reload Config
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: SEND INVOICE TO CLIENT EMAIL MODAL -->
+    <div class="modal-backdrop no-print" id="modal-send-email">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title flex-align">
+            <i data-lucide="mail"></i>
+            <h2>Send Invoice to Client</h2>
+          </div>
+          <button class="btn-close" id="btn-close-send-email">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-desc">Dispatch this invoice directly to your client's email inbox.</p>
+
+          <div class="form-group mt-3">
+            <label for="send-email-to">Client Recipient Email</label>
+            <div class="input-with-icon">
+              <i data-lucide="mail"></i>
+              <input type="email" id="send-email-to" placeholder="client@company.com" required>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label for="send-email-subject">Email Subject Line</label>
+            <input type="text" id="send-email-subject" placeholder="Invoice #INV-001 from My Business">
+          </div>
+
+          <div class="form-group mt-3">
+            <label for="send-email-body">Email Body Message</label>
+            <textarea id="send-email-body" rows="5" placeholder="Dear Client..."></textarea>
+          </div>
+
+          <!-- EmailJS / Custom SMTP Credentials Accordion -->
+          <details class="mt-3 emailjs-details-box">
+            <summary class="cursor-pointer text-sm flex-align font-semibold text-muted">
+              <i data-lucide="settings"></i> Direct Gmail / SMTP Credentials (Optional for Direct Inbox Delivery)
+            </summary>
+            <div class="form-grid grid-2 mt-2 p-2 bg-subtle radius-sm border-subtle">
+              <div class="form-group">
+                <label for="smtp-user">Your Gmail / Sender Email</label>
+                <input type="email" id="smtp-user" placeholder="yourname@gmail.com">
+              </div>
+              <div class="form-group">
+                <label for="smtp-pass">Gmail App Password / SMTP Password</label>
+                <input type="password" id="smtp-pass" placeholder="•••• •••• •••• ••••">
+              </div>
+            </div>
+            <div class="form-grid grid-3 mt-2 p-2 bg-subtle radius-sm border-subtle">
+              <div class="form-group">
+                <label for="emailjs-service-id">EmailJS Service ID</label>
+                <input type="text" id="emailjs-service-id" placeholder="service_xxx">
+              </div>
+              <div class="form-group">
+                <label for="emailjs-template-id">Template ID</label>
+                <input type="text" id="emailjs-template-id" placeholder="template_xxx">
+              </div>
+              <div class="form-group">
+                <label for="emailjs-public-key">Public Key</label>
+                <input type="text" id="emailjs-public-key" placeholder="user_xxx">
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="modal-footer justify-between"
+          style="display: flex; align-items: center; justify-content: space-between;">
+          <button class="btn btn-accent btn-sm" id="btn-open-gmail-compose"
+            title="Open new browser tab in Gmail with composed invoice">
+            <i data-lucide="external-link"></i> Open Gmail Compose Tab
+          </button>
+          <div class="flex-align" style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="btn-cancel-send-email">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="btn-confirm-send-email">
+              <i data-lucide="send"></i> Send Direct
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: PAYMENT GATEWAY CHECKOUT MODAL -->
+    <div class="modal-backdrop no-print" id="modal-payment-checkout">
+      <div class="modal-box modal-md">
+        <div class="modal-header justify-between">
+          <div class="modal-title flex-align">
+            <i data-lucide="shield-check" class="text-success"></i>
+            <h2>Secure Online Payment Checkout</h2>
+          </div>
+          <button class="btn-close" id="btn-close-payment-checkout">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Sandbox Test Mode Toggle Bar -->
+          <div class="test-mode-bar flex-align justify-between p-2 mb-3 bg-subtle radius-sm border-subtle">
+            <div class="flex-align gap-2">
+              <span class="badge badge-accent">Sandbox Test Mode</span>
+              <span class="text-xs text-muted">Simulate test payments without real money</span>
+            </div>
+            <label class="switch-toggle cursor-pointer" title="Toggle Sandbox Test Mode">
+              <input type="checkbox" id="chk-payment-test-mode" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Invoice Summary Box -->
+          <div class="checkout-summary-card p-3 mb-3 radius-md bg-subtle border-subtle flex-align justify-between">
+            <div>
+              <div class="text-xs text-muted uppercase font-semibold">Invoice Reference</div>
+              <div class="font-bold text-lg" id="checkout-inv-number">#INV-2026-001</div>
+              <div class="text-xs text-muted" id="checkout-client-name">Acme Enterprises</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-muted uppercase font-semibold">Total Payable</div>
+              <div class="font-extrabold text-2xl text-primary" id="checkout-total-amount">₹0.00</div>
+            </div>
+          </div>
+
+          <!-- Payment Gateway Selection Tabs -->
+          <div class="gateway-tabs flex-align gap-2 mb-3 border-bottom pb-2">
+            <button class="gateway-tab active" data-tab="card">
+              <i data-lucide="credit-card"></i> Card / Stripe
+            </button>
+            <button class="gateway-tab" data-tab="paypal">
+              <i data-lucide="wallet"></i> PayPal
+            </button>
+            <button class="gateway-tab" data-tab="upi">
+              <i data-lucide="qr-code"></i> UPI / Razorpay
+            </button>
+            <button class="gateway-tab" data-tab="bank">
+              <i data-lucide="building"></i> Bank Transfer
+            </button>
+          </div>
+
+          <!-- TAB 1: CREDIT / DEBIT CARD (STRIPE) -->
+          <div class="gateway-pane active" id="pane-card">
+            <div class="form-group">
+              <label for="pay-card-num">Card Number</label>
+              <div class="input-with-icon">
+                <i data-lucide="credit-card"></i>
+                <input type="text" id="pay-card-num" placeholder="4242 •••• •••• 4242" value="4242 4242 4242 4242">
+              </div>
+            </div>
+            <div class="form-grid grid-2 mt-2">
+              <div class="form-group">
+                <label for="pay-card-exp">Expiry Date</label>
+                <input type="text" id="pay-card-exp" placeholder="MM/YY" value="12/28">
+              </div>
+              <div class="form-group">
+                <label for="pay-card-cvc">CVC / CVV</label>
+                <input type="password" id="pay-card-cvc" placeholder="123" value="123">
+              </div>
+            </div>
+            <button class="btn btn-success btn-full mt-3" id="btn-submit-pay-card">
+              <i data-lucide="lock"></i> Pay Securely via Stripe Card
+            </button>
+          </div>
+
+          <!-- TAB 2: PAYPAL -->
+          <div class="gateway-pane" id="pane-paypal" style="display: none;">
+            <p class="text-sm text-muted mb-3">Pay using your PayPal account balance or linked cards securely.</p>
+            <button class="btn btn-accent btn-full" id="btn-submit-pay-paypal">
+              <i data-lucide="wallet"></i> Express Checkout with PayPal
+            </button>
+          </div>
+
+          <!-- TAB 3: UPI / RAZORPAY / QR SCANNER -->
+          <div class="gateway-pane" id="pane-upi" style="display: none;">
+            <div class="text-center p-3 radius-md bg-subtle border-subtle">
+              <div class="text-xs text-muted mb-2">Scan QR Code with GPay, PhonePe, Paytm, or BHIM</div>
+              <div class="qr-code-wrapper p-2 bg-white inline-block radius-sm shadow-sm">
+                <img id="checkout-qr-img"
+                  src="https://quickchart.io/qr?text=upi://pay?pa=apexstudio@okaxis&pn=ApexStudio&am=100&cu=INR"
+                  alt="UPI QR Code" width="180" height="180" style="object-fit: contain;">
+              </div>
+              <div class="text-xs font-semibold text-muted mt-2" id="checkout-upi-id-display">UPI ID: apexstudio@okaxis</div>
+            </div>
+            <button class="btn btn-primary btn-full mt-3" id="btn-submit-pay-razorpay">
+              <i data-lucide="check-circle"></i> Confirm Razorpay / UPI Payment
+            </button>
+          </div>
+
+          <!-- TAB 4: DIRECT BANK TRANSFER (ACH/SEPA) -->
+          <div class="gateway-pane" id="pane-bank" style="display: none;">
+            <div class="p-3 bg-subtle radius-md border-subtle text-sm" id="checkout-bank-details-display">
+              <div class="font-bold mb-1">Direct Bank Wire / ACH Details:</div>
+              <div>Bank Name: HDFC Bank Ltd / Silicon Valley Bank</div>
+              <div>Account #: 5020-0012-345678</div>
+              <div>IFSC / SWIFT: HDFC0001234</div>
+            </div>
+            <div class="form-group mt-3">
+              <label for="pay-bank-ref">Payment Reference / UTR Number</label>
+              <input type="text" id="pay-bank-ref" placeholder="e.g. UTR-9988221100">
+            </div>
+            <button class="btn btn-secondary btn-full mt-3" id="btn-submit-pay-bank">
+              <i data-lucide="send"></i> Record Bank Transfer Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container no-print"></div>
+
+  </div>
+
+  <!-- Application Scripts -->
+  <script type="module" src="js/invoice-data.js"></script>
+  <script type="module" src="js/payment-gateways.js"></script>
+  <script type="module" src="js/pdf-exporter.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/email-service.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
